@@ -6,3 +6,7 @@ inertia-django==0.5.2
 django-vite==2.0.2
 colorlog==6.7.0
 python-decouple==3.7
+pandas
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

@@ -420,3 +420,7 @@ $RECYCLE.BIN/
 myvenv/
 collectedstatic/
 node_modules/
+
+# Google Sheets API
+credentials.json
+token.json
