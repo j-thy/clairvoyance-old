@@ -7,14 +7,15 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from decouple import config
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 # The ID and range of a sample spreadsheet.
 BANNER_SPREADSHEET_ID = '1rKtRX3WK9ZpbEHhDTy7yGSxYWIav1Hr_KhNM0jWN2wc'
-TOKEN_PATH = '/home/deck/Documents/clairvoyance/scripts/token.json'
-CREDS_PATH = '/home/deck/Documents/clairvoyance/scripts/credentials.json'
+TOKEN_PATH = config('TOKEN_PATH')
+CREDS_PATH = config('CREDS_PATH')
 DATA_SHEETS = ['Data', 'Data2']
 
 class Banner:
@@ -64,7 +65,7 @@ class BannerSpreadsheet:
     def __init__(self, sheet_id, scopes, token_path, creds_path):
         self.sheet_id = sheet_id
         self.creds = self.get_credentials(scopes, token_path, creds_path)
-        self.banners = []
+        self.banners = {}
         self.servants = []
     
     def get_credentials(self, scopes, token_path, creds_path):
@@ -94,35 +95,14 @@ class BannerSpreadsheet:
 
         banner_list = banner_data.get_banner_list()
 
-        for banner in banner_list:
-            banner_vals = banner.get('values')
-            region = banner_vals[3].get('formattedValue').strip()
-            # If the Banner is EN
-            # TODO: rework this so that it sets aside the EN banners and creates the JP banner first,
-            #       then in a second loop, it checks the EN banners and updates the JP banners (or creates the EN banners by itself)
-            if (region == 'NA'):
-                # Check if an equivalent JP banner exists
-                en_banner_id = banner_vals[4].get('formattedValue').strip()
-                jp_banner_id = en_banner_id[:-2] if en_banner_id[-2:] == '.5' else en_banner_id
-                jp_banner = filter(lambda x: x.jp_banner_id == jp_banner_id, self.banners) #TODO: fix???
-                # Create a new banner if the JP equivalent doesn't exist
-                if not jp_banner:
-                    jp_banner = Banner(
-                        None,
-                        en_banner_id,
-                        None,
-                        banner_vals[0].get('formattedValue').strip(),
-                        None,
-                        banner_vals[1].get('formattedValue').strip(),
-                        None,
-                        banner_vals[2].get('formattedValue').strip()
-                    )
-                    self.banners.append(jp_banner)
-                # Update the preexisting JP banner
-                else:
-            # Create JP banner object
-            else:
-                pass
+        jp_banners = filter(lambda x: x.get('values')[3].get('formattedValue').strip() == 'JP', banner_list)
+        en_banners = filter(lambda x: x.get('values')[3].get('formattedValue').strip() == 'NA', banner_list)
+
+        for banner in jp_banners:
+            banner_values = banner.get('values')
+            jp_name = 
+            print('test')
+
 
         servant_list = banner_data.get_servant_list()
 
