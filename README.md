@@ -55,5 +55,6 @@ python manage.py runserver
 
 ```shell
 npm run dev
+```
 
 Now open your browser and go to: `http://localhost:8000/`
