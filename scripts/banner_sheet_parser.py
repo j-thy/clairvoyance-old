@@ -27,13 +27,21 @@ CREDS_PATH = config('CREDS_PATH')
 # Data2 = Servant Data
 DATA_SHEETS = ['Data', 'Data2']
 
-# Corresponds to the columns in the banner sheet. 
+# Corresponds to the columns in the banner sheet.
+# Example: Fate/Accel Zero | 2018/04/19 | 2018/05/10 | NA | 2
 class BannerColumnNum(Enum):
     NAME = 0
     START_DATE = 1
     END_DATE = 2
     REGION = 3
     ID = 4
+
+# Corresponds to the columns in the servant sheet.
+# Example: 2 | Perma | Altra Pendragon | [Banner IDs & Solo Rateup]
+class ServantColumnNum(Enum):
+    ID = 0
+    STATUS = 1
+    NAME = 2
 
 # Used to serialize the banner data into JSON.
 def banner_serializer(obj):
@@ -49,6 +57,17 @@ def banner_serializer(obj):
             'en_end_date': obj.en_end_date,
             'jp_banner_id': obj.jp_banner_id,
             'en_banner_id': obj.en_banner_id
+        }
+    return obj.__dict__
+
+# Used to serialize the servant data into JSON.
+def servant_serializer(obj):
+    if isinstance(obj, ServantExport):
+        return {
+            'servant_id': obj.servant_id,
+            'status': obj.status,
+            'name': obj.name,
+            'rateups': obj.rateups
         }
     return obj.__dict__
 
@@ -68,9 +87,11 @@ class BannerExport:
 
 # Format the servant data before serializing it into JSON.
 class ServantExport:
-    def __init__(self, servant_id):
+    def __init__(self, servant_id, status, name, rateups):
         self.servant_id = servant_id
-        self.rateup = {}
+        self.status = status
+        self.name = name
+        self.rateups = rateups
 
 # Get the banner and servant sheets from the Google Sheet source.
 class SheetsData:
@@ -93,11 +114,11 @@ class SheetsData:
                                 includeGridData=True
                             ).execute()
     
-    # Return the banner rows.
+    # Return the banner sheet rows. Cut out the first row (header).
     def get_banner_list(self):
         return self.banner_list.get('sheets')[0].get('data')[0].get('rowData')[1:]
     
-    # Return the servant rows.
+    # Return the servant sheet rows. Cut out the first row (header).
     def get_servant_list(self):
         return self.servant_list.get('sheets')[0].get('data')[0].get('rowData')[1:]
 
@@ -130,11 +151,43 @@ class BannerRow:
     def get_banner_id(self):
         return self.row[BannerColumnNum.ID.value].get('formattedValue')
 
+# Get the data from the columns in a servant row.
+class ServantRow:
+    def __init__(self, row):
+        self.row = row
+        self.num_rateup = len(row) - len(ServantColumnNum)
+        # Find the number of rateups in the row.
+        for i, column in enumerate(row):
+            if 'formattedValue' not in column:
+                self.num_rateup = i - len(ServantColumnNum)
+                break
+            
+        
+    # Get the servant ID.
+    def get_servant_id(self):
+        return self.row[0].get('formattedValue')
+
+    # Get the servant status.
+    def get_servant_status(self):
+        return self.row[1].get('formattedValue')
+
+    # Get the servant name.
+    def get_servant_name(self):
+        return self.row[2].get('formattedValue')
+    
+    # Get the rateup banners.
+    def get_servant_rateups(self):
+        rateup = []
+        # For each rateup, add it to the list. (Skip the first 3 columns of the row)
+        for i in range(0, self.num_rateup, 2):
+            rateup.append(self.row[i + len(ServantColumnNum)].get('formattedValue'))
+        return rateup
+
 # Parse the spreadsheet data.
 class Spreadsheet:
     def __init__(self, sheet_id, scopes, token_path, creds_path):
         self.banners = {}
-        self.servants = []
+        self.servants = {}
         self.sheet_data = SheetsData(self.get_credentials(scopes, token_path, creds_path), sheet_id)
     
     # Get your Google Cloud credentials.
@@ -161,7 +214,7 @@ class Spreadsheet:
         return creds
 
     # Create the JSON file for the servant data.
-    def create_banner_json(self, sheet_ranges_list):
+    def create_banner_json(self):
         # Get the rows in the banner sheet.
         banner_list = self.sheet_data.get_banner_list()
 
@@ -234,8 +287,36 @@ class Spreadsheet:
         # Export the banner data to JSON.
         with open('banner_data.json', 'w') as outfile:
             json.dump(self.banners, outfile, default=banner_serializer)
+    
+    # Create the JSON file for the servant data.
+    def create_servant_json(self):
+        # Get the rows in the servant sheet.
+        servant_list = self.sheet_data.get_servant_list()
+
+        # Create objects for each servant.
+        for servant in servant_list:
+            # If it reaches the empty rows, break.
+            if len(servant) == 0:
+                break
+
+            servant_row = ServantRow(servant.get('values'))
+            self.servants[servant_row.get_servant_id()] = ServantExport(
+                servant_row.get_servant_id(),
+                servant_row.get_servant_status(),
+                servant_row.get_servant_name(),
+                servant_row.get_servant_rateups()
+            )
+
+        # Sort the servants by their ID.
+        self.servants = {k: self.servants[k] for k in sorted(self.servants, key=lambda x: float(x))}
+        # Export the servant data to JSON.
+        with open('servant_data.json', 'w') as outfile:
+            json.dump(self.servants, outfile, default=servant_serializer)
+
 
 # Parse the spreadsheet.
 banner_servant_sheet = Spreadsheet(SPREADSHEET_ID, SCOPES, TOKEN_PATH, CREDS_PATH)
+# Create the JSON file for the banner data.
+banner_servant_sheet.create_banner_json()
 # Create the JSON file for the servant data.
-banner_servant_sheet.create_banner_json(DATA_SHEETS)
+banner_servant_sheet.create_servant_json()
