@@ -424,3 +424,7 @@ node_modules/
 # Google Sheets API
 credentials.json
 token.json
+
+.vscode/
+banner_data.json
+servant_data.json
