@@ -43,6 +43,7 @@ python3 manage.py migrate
 
 ```shell
 npm install
+npm audit fix
 ```
 
 - Run the Python server
