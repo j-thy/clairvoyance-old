@@ -13,7 +13,7 @@ class Banner(models.Model):
     en_banner_id = models.CharField(max_length=200, blank=True, default='')
 
     def __str__(self):
-        return self.en_name if not '' else self.jp_name
+        return self.en_name if (self.en_name != '' and self.en_name != None) else self.jp_name
         
 
 class Servant(models.Model):
