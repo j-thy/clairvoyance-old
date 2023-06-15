@@ -7,6 +7,6 @@
 
 <ul>
 {#each $page.props.events as event}
-	<li>{event}</li>
+    <li><a href="/about/{event}">{event}</a></li>
 {/each}
 </ul>

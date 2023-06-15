@@ -22,8 +22,17 @@ class Index(View):
 class About(View):
     def get(self, request):
         servants = Servant.objects.all()
-        servant_names = [str(servant) for servant in servants]
+        servant_ids = [servant.servant_id for servant in servants]
         return render(request, 'sample_app/about', props={
-            'events': servant_names,
+            'events': servant_ids,
             'page_name': 'About us'
+        })
+
+class Event(View):
+    def get(self, request, servant_id):
+        servant = Servant.objects.get(pk=servant_id)
+        return render(request, 'sample_app/event', props={
+            'servant_id': servant.servant_id,
+            'status': servant.status,
+            'name': servant.name
         })
