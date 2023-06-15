@@ -1,7 +1,7 @@
 from django.views import View
 from inertia import render
 import logging
-from .models import Servant
+from .models import Servant, Banner
 
 class Index(View):
     def get(self, request):
@@ -11,11 +11,10 @@ class Index(View):
         logger.error("ERROR")
         logger.warning("WARNING")
         logger.critical("CRITICAL HIT! ")
+        banners = Banner.objects.all()
+        banner_names = [str(banner) for banner in banners]
         return render(request, 'sample_app/index', props={
-            'events': [
-                'Milano',
-                'Napoli',
-            ],
+            'events': banner_names,
             'page_name': 'Home'
         })
 
