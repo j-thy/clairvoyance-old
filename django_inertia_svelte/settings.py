@@ -32,6 +32,7 @@ class Base(Configuration):
     INSTALLED_APPS += [  # library apps
         'inertia',
         'django_vite',
+        'import_export'
     ]
     INSTALLED_APPS += [  # project apps
         'sample_app',
