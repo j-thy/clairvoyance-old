@@ -1,7 +1,7 @@
 from django.views import View
 from inertia import render
 import logging
-
+from .models import Servant
 
 class Index(View):
     def get(self, request):
@@ -22,10 +22,9 @@ class Index(View):
 
 class About(View):
     def get(self, request):
+        servants = Servant.objects.all()
+        servant_names = [str(servant) for servant in servants]
         return render(request, 'sample_app/about', props={
-            'events': [
-                'Nola',
-                'Cimitile',
-            ],
+            'events': servant_names,
             'page_name': 'About us'
         })
