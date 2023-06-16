@@ -176,6 +176,8 @@ class ServantRow:
         # For each rateup, add it to the list. (Skip the first 3 columns of the row)
         for i in range(0, self.num_rateup, 2):
             rateup.append(self.row[i + len(ServantColumnNum)].get('formattedValue'))
+        # Convert the list into a string separated by commas.
+        rateup = ','.join(rateup)
         return rateup
 
 # Parse the spreadsheet data.
