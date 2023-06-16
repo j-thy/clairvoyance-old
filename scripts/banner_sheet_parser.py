@@ -47,16 +47,13 @@ class ServantColumnNum(Enum):
 def banner_serializer(obj):
     if isinstance(obj, BannerExport):
         return {
-            'jp_name': obj.jp_name,
-            'en_name': obj.en_name,
-            'jp_wiki_link': obj.jp_wiki_link,
-            'en_wiki_link': obj.en_wiki_link,
-            'jp_start_date': obj.jp_start_date,
-            'en_start_date': obj.en_start_date,
-            'jp_end_date': obj.jp_end_date,
-            'en_end_date': obj.en_end_date,
-            'jp_banner_id': obj.jp_banner_id,
-            'en_banner_id': obj.en_banner_id
+            'name': obj.name,
+            'wiki_link': obj.wiki_link,
+            'start_date': obj.start_date,
+            'end_date': obj.end_date,
+            'banner_id': obj.banner_id,
+            'region': obj.region,
+            'jp_banner': obj.jp_banner
         }
     return obj.__dict__
 
@@ -73,17 +70,15 @@ def servant_serializer(obj):
 
 # Format the banner data before serializing it into JSON.
 class BannerExport:
-    def __init__(self, jp_name, en_name, jp_wiki_link, en_wiki_link, jp_start_date, en_start_date, jp_end_date, en_end_date, jp_banner_id, en_banner_id):
-        self.jp_name = jp_name
-        self.en_name = en_name
-        self.jp_wiki_link = jp_wiki_link
-        self.en_wiki_link = en_wiki_link
-        self.jp_start_date = jp_start_date
-        self.en_start_date = en_start_date
-        self.jp_end_date = jp_end_date
-        self.en_end_date = en_end_date
-        self.jp_banner_id = jp_banner_id
-        self.en_banner_id = en_banner_id
+    def __init__(self, name, wiki_link, start_date, end_date, banner_id, region, jp_banner):
+        self.name = name
+        self.wiki_link = wiki_link
+        self.start_date = start_date
+        self.end_date = end_date
+        self.banner_id = banner_id
+        self.region = region
+        self.jp_banner = jp_banner
+
 
 # Format the servant data before serializing it into JSON.
 class ServantExport:
@@ -226,14 +221,11 @@ class Spreadsheet:
             banner_row = BannerRow(banner.get('values'))
             self.banners[banner_row.get_banner_id()] = BannerExport(
                 banner_row.get_banner_name(),
-                None,
                 banner_row.get_banner_link(),
-                None,
                 banner_row.get_banner_start_date(),
-                None,
                 banner_row.get_banner_end_date(),
-                None,
                 banner_row.get_banner_id(),
+                'JP',
                 None
             )
 
@@ -244,46 +236,22 @@ class Spreadsheet:
             banner_row = BannerRow(banner.get('values'))
             banner_id = banner_row.get_banner_id()
             # If it has .5, check if a JP equivalent exists.
-            if banner_id[-2:] == '.5':
-                jp_banner_id = banner_id[:-2]
-                # If there is a JP banner with the same ID with the .5 removed, add the NA banner's information to the JP banner's object.
-                if jp_banner_id in self.banners and self.banners[jp_banner_id].en_banner_id is None:
-                    self.banners[jp_banner_id].en_name = banner_row.get_banner_name()
-                    self.banners[jp_banner_id].en_wiki_link = banner_row.get_banner_link()
-                    self.banners[jp_banner_id].en_start_date = banner_row.get_banner_start_date()
-                    self.banners[jp_banner_id].en_end_date = banner_row.get_banner_end_date()
-                    self.banners[jp_banner_id].en_banner_id = banner_row.get_banner_id()
-                # If there isn't, make a new object for the NA banner.
-                else:
-                    self.banners[banner_id] = BannerExport(
-                        None,
-                        banner_row.get_banner_name(),
-                        None,
-                        banner_row.get_banner_link(),
-                        None,
-                        banner_row.get_banner_start_date(),
-                        None,
-                        banner_row.get_banner_end_date(),
-                        None,
-                        banner_row.get_banner_id()
-                    )
-            # If it has .6 or doesn't have a decimal, it has no JP equivalent. Make a new object for it.
-            else:
-                self.banners[banner_id] = BannerExport(
-                    None,
-                    banner_row.get_banner_name(),
-                    None,
-                    banner_row.get_banner_link(),
-                    None,
-                    banner_row.get_banner_start_date(),
-                    None,
-                    banner_row.get_banner_end_date(),
-                    None,
-                    banner_row.get_banner_id()
-                )
+            jp_banner_id = banner_id[:-2] if banner_id[-2:] == '.5' else None
+            # If there is a JP banner with the same ID with the .5 removed, add the JP banner's ID to the NA banner's object.
+            self.banners[banner_id] = BannerExport(
+                banner_row.get_banner_name(),
+                banner_row.get_banner_link(),
+                banner_row.get_banner_start_date(),
+                banner_row.get_banner_end_date(),
+                banner_row.get_banner_id(),
+                'NA',
+                jp_banner_id if jp_banner_id in self.banners and self.banners[jp_banner_id].region == 'JP' else None
+            )
 
         # Sort the dictionary of banners by their ID.
         self.banners = {k: self.banners[k] for k in sorted(self.banners, key=lambda x: float(x))}
+        # Convert the dictionary to a list.
+        self.banners = list(self.banners.values())
         # Export the banner data to JSON.
         with open('banner_data.json', 'w') as outfile:
             json.dump(self.banners, outfile, default=banner_serializer)
@@ -309,6 +277,8 @@ class Spreadsheet:
 
         # Sort the servants by their ID.
         self.servants = {k: self.servants[k] for k in sorted(self.servants, key=lambda x: float(x))}
+        # Convert the dictionary to a list.
+        self.servants = list(self.servants.values())
         # Export the servant data to JSON.
         with open('servant_data.json', 'w') as outfile:
             json.dump(self.servants, outfile, default=servant_serializer)
