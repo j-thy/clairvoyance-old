@@ -36,6 +36,7 @@ echo "SECRET_KEY=$(python -c 'from django.core.management.utils import get_rando
 - Apply the migrations
 
 ```shell
+python3 manage.py makemigrations
 python3 manage.py migrate
 ```
 
@@ -49,7 +50,7 @@ npm audit fix
 - Run the Python server
 
 ```shell
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 - Open another terminal window and run the Vite server
