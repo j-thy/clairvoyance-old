@@ -6,7 +6,7 @@
 <div id="pgside">
     <!-- (A1) BRANDING OR USER -->
     <!-- LINK TO DASHBOARD OR LOGOUT -->
-    <div id="pguser">
+    <div id="pguser" class="">
         <img src="/static/img/potato.png">
         <i class="txt">MY ADMIN</i>
     </div>
