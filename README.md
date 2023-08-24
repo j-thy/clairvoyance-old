@@ -9,7 +9,7 @@ Frontend: Svelte
 ## Installation and usage
 
 - Clone and cd into the project
-- Create a Python virtual environment
+- Create a Python virtual environment (tested on Python 3.10.6)
 
 ```shell
 python3 -m venv env
@@ -41,7 +41,7 @@ python3 manage.py makemigrations
 python3 manage.py migrate
 ```
 
-- Install the NPM dependencies
+- Install the NPM dependencies (tested on npm 9.6.3 and node 19.6.0)
 
 ```shell
 npm install
